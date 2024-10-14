@@ -23,7 +23,7 @@ class MainWindow(QMainWindow):
 
         contents = Path(__file__).read_text()
 
-        self.editor = SyntaxEdit(contents, syntax="Python")
+        self.editor = SyntaxEdit(contents, syntax="Python", use_smart_indentation=True)
         self.editor.textChanged.connect(self.editor_changed)
 
         style_language = QHBoxLayout()

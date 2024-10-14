@@ -1,4 +1,6 @@
 from qtpy import QtGui
+from qtpy.QtGui import QTextCursor
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QTextEdit
 
 from pygments.styles import get_style_by_name
@@ -18,10 +20,12 @@ class SyntaxEdit(QTextEdit):
         theme="solarized-light",
         indentation_size=4,
         use_theme_background=True,
+        use_smart_indentation=True,
     ):
         super().__init__("", parent)
 
         self._indentation_size = indentation_size
+        self._use_smart_indentation = use_smart_indentation
 
         self._font = font
         self._font_size = font_size
@@ -92,3 +96,30 @@ class SyntaxEdit(QTextEdit):
 
     def setContents(self, contents):
         self.setPlainText(contents)
+
+
+    def keyPressEvent(self, event):
+        if self._use_smart_indentation and event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            cursor = self.textCursor()
+            cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
+            current_line_text = cursor.selectedText()
+
+            # indentation may be tabs or spaces, get the leading whitespace
+            indent = ""
+            for char in current_line_text:
+                if char == " " or char == "\t":
+                    indent += char
+                else:
+                    break
+
+            # if the previous line ended with a colon, indent the new line by one level
+            if current_line_text.strip().endswith(":"):
+                if '\t' in indent:
+                    indent += '\t'
+                else:
+                    indent += " " * self._indentation_size
+
+            super().keyPressEvent(event)
+            self.insertPlainText(indent)
+        else:
+            super().keyPressEvent(event)
